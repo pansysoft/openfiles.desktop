@@ -13,7 +13,7 @@ You can install OpenFiles using one of the following methods:
 
 * **Microsoft Store**: The easiest way to stay updated on Windows.  
     **微软商店**：Windows 用户最简单的自动更新方式。  
-    [Get it from Microsoft Store](https://apps.microsoft.com/store/detail/openfiles/9NBLGGH4X2N5) (或在应用商店搜索 "OpenFiles")
+    [Get it from Microsoft Store](https://apps.microsoft.com/detail/9n34z0hxdtgk) (或在应用商店搜索 "OpenFiles")
 
 * **Official Website**: Download the latest installer directly.  
     **官网下载**：直接获取最新版本的安装包。  
