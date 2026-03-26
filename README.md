@@ -1,4 +1,10 @@
-# openfiles.desktop
+# OpenFiles Desktop | OpenFiles 桌面版
+
+## Description | 简介
+
+One app to open 350+ file formats — images, documents, code, video, audio, archives and more. All processed locally for privacy.
+
+一个应用打开 350+ 种格式 — 图片、文档、代码、视频、音频、压缩包等，全部本地处理，保护隐私。
 
 ## Community | 社区交流
 
