@@ -1,0 +1,43 @@
+name: Upload R2 Release Assets
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release tag to update
+        required: true
+        default: 3.2026.621
+      base_url:
+        description: R2/CDN release asset base URL
+        required: true
+        default: https://cdn.pansysoft.app/releases
+
+permissions:
+  contents: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download mac assets from R2 CDN
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ inputs.version }}"
+          base="${{ inputs.base_url }}"
+          mkdir -p release
+          assets=(
+            "OpenFiles-${version}-arm64-mac.zip"
+            "OpenFiles-${version}-mac.zip"
+            "OpenFiles-${version}-arm64.dmg"
+            "OpenFiles-${version}.dmg"
+          )
+          for asset in "${assets[@]}"; do
+            curl -fL --retry 5 --retry-delay 5 --retry-all-errors -o "release/${asset}" "${base}/${asset}"
+            ls -lh "release/${asset}"
+          done
+
+      - name: Upload mac assets to draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ inputs.version }}" release/* --repo "${{ github.repository }}" --clobber
