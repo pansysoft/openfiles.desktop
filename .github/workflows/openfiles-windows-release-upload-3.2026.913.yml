@@ -12,30 +12,31 @@ jobs:
           node <<'NODE'
           const fs = require('node:fs');
           const crypto = require('node:crypto');
-          const { Readable } = require('node:stream');
-          const { pipeline } = require('node:stream/promises');
+          const { execFile } = require('node:child_process');
+          const { promisify } = require('node:util');
+          const exec = promisify(execFile);
           const assets = [
-            {name: 'OpenFiles Setup 3.2026.913.exe', hash: '8a673d64acadcc9f138a98247a1385760f532c154bc82a7a6c2d3e29c1b41113'},
-            {name: 'OpenFiles 3.2026.913.appx', hash: 'a4ab806ebb382ffffc257a8c738131a35a114b2fee5b5dcf866a7dc45c7c3b60', parts: 2},
-            {name: 'OpenFiles 3.2026.913 arm64.appx', hash: 'ce367b1c9c3e3a80d8f06abb3292fe22f1816e10c27e53f8e06c217f700f14a5', parts: 2}
+            {name:'OpenFiles Setup 3.2026.913.exe',hash:'8a673d64acadcc9f138a98247a1385760f532c154bc82a7a6c2d3e29c1b41113',sources:[{path:'OpenFiles Setup 3.2026.913.exe',size:250412547}]},
+            {name:'OpenFiles 3.2026.913.appx',hash:'a4ab806ebb382ffffc257a8c738131a35a114b2fee5b5dcf866a7dc45c7c3b60',sources:[{path:'upload-3.2026.913/OpenFiles 3.2026.913.appx.part0',size:209715200},{path:'upload-3.2026.913/OpenFiles 3.2026.913.appx.part1',size:119745323}]},
+            {name:'OpenFiles 3.2026.913 arm64.appx',hash:'ce367b1c9c3e3a80d8f06abb3292fe22f1816e10c27e53f8e06c217f700f14a5',sources:[{path:'upload-3.2026.913/OpenFiles 3.2026.913 arm64.appx.part0',size:209715200},{path:'upload-3.2026.913/OpenFiles 3.2026.913 arm64.appx.part1',size:146851635}]}
           ];
-          (async () => {
-            fs.mkdirSync('release', {recursive: true});
-            for (const asset of assets) {
-              const out = 'release/' + asset.name;
-              const paths = asset.parts ? Array.from({length: asset.parts}, (_,i) => 'upload-3.2026.913/' + asset.name + '.part' + i) : [asset.name];
-              for (const path of paths) {
-                const url = 'https://cdn.pansysoft.app/releases/' + path.split('/').map(encodeURIComponent).join('/');
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Download failed: ' + response.status + ' ' + path);
-                await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(out, {flags:'a'}));
-              }
-              const hash = crypto.createHash('sha256');
-              for await (const chunk of fs.createReadStream(out)) hash.update(chunk);
-              if (hash.digest('hex') !== asset.hash) throw new Error('Checksum mismatch: ' + asset.name);
-              console.log('Verified ' + asset.name);
-            }
-          })().catch(e => {console.error(e); process.exit(1);});
+          (async()=>{
+            fs.mkdirSync('release',{recursive:true}); fs.mkdirSync('chunks',{recursive:true});
+            await Promise.all(assets.map(async(asset,ai)=>{
+              const chunks = await Promise.all(asset.sources.flatMap((source,si)=>Array.from({length:8},(_,ci)=>({source,si,ci}))).map(async({source,si,ci})=>{
+                const start=Math.floor(source.size*ci/8), end=Math.floor(source.size*(ci+1)/8)-1;
+                const out=`chunks/${ai}-${si}-${ci}`;
+                const url='https://cdn.pansysoft.app/releases/'+source.path.split('/').map(encodeURIComponent).join('/');
+                await exec('curl',['-fL','--silent','--show-error','--connect-timeout','20','--max-time','300','--retry','3','--retry-all-errors','--range',`${start}-${end}`,'-o',out,url],{timeout:1300000});
+                if(fs.statSync(out).size!==end-start+1) throw new Error('Invalid range size: '+out);
+                console.log('Downloaded '+out); return out;
+              }));
+              const fd=fs.openSync('release/'+asset.name,'w'); const hash=crypto.createHash('sha256');
+              try{for(const chunk of chunks){const data=fs.readFileSync(chunk);hash.update(data);fs.writeFileSync(fd,data);}}finally{fs.closeSync(fd);}
+              if(hash.digest('hex')!==asset.hash)throw new Error('Checksum mismatch: '+asset.name);
+              console.log('Verified '+asset.name);
+            }));
+          })().catch(e=>{console.error(e);process.exit(1);});
           NODE
       - name: Upload verified files to release
         env:
