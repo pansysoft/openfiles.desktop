@@ -1,0 +1,43 @@
+name: Upload Windows 3.2026.913 release assets
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download and verify Windows artifacts
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const crypto = require('node:crypto');
+          const { Readable } = require('node:stream');
+          const { pipeline } = require('node:stream/promises');
+          const assets = [
+            {name: 'OpenFiles Setup 3.2026.913.exe', hash: '8a673d64acadcc9f138a98247a1385760f532c154bc82a7a6c2d3e29c1b41113'},
+            {name: 'OpenFiles 3.2026.913.appx', hash: 'a4ab806ebb382ffffc257a8c738131a35a114b2fee5b5dcf866a7dc45c7c3b60', parts: 2},
+            {name: 'OpenFiles 3.2026.913 arm64.appx', hash: 'ce367b1c9c3e3a80d8f06abb3292fe22f1816e10c27e53f8e06c217f700f14a5', parts: 2}
+          ];
+          (async () => {
+            fs.mkdirSync('release', {recursive: true});
+            for (const asset of assets) {
+              const out = 'release/' + asset.name;
+              const paths = asset.parts ? Array.from({length: asset.parts}, (_,i) => 'upload-3.2026.913/' + asset.name + '.part' + i) : [asset.name];
+              for (const path of paths) {
+                const url = 'https://cdn.pansysoft.app/releases/' + path.split('/').map(encodeURIComponent).join('/');
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Download failed: ' + response.status + ' ' + path);
+                await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(out, {flags:'a'}));
+              }
+              const hash = crypto.createHash('sha256');
+              for await (const chunk of fs.createReadStream(out)) hash.update(chunk);
+              if (hash.digest('hex') !== asset.hash) throw new Error('Checksum mismatch: ' + asset.name);
+              console.log('Verified ' + asset.name);
+            }
+          })().catch(e => {console.error(e); process.exit(1);});
+          NODE
+      - name: Upload verified files to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload 3.2026.913 release/* --repo pansysoft/openfiles.desktop
