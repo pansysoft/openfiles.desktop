@@ -21,7 +21,7 @@ You can install OpenFiles using one of the following methods:
 
 * **GitHub Releases**: Download specific versions or portable builds.  
     **GitHub 发布页**：下载特定版本或便携版。  
-    [View Releases on GitHub](https://github.com/PansySoft/OpenFiles/releases)
+    [View Releases on GitHub](https://github.com/pansysoft/openfiles.desktop/releases)
 
 ---
 
