@@ -1,0 +1,40 @@
+name: Upload notarized macOS 3.2026.1001
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify CDN artifacts and upload to GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir release
+          curl -fL --retry 4 --connect-timeout 30 --max-time 1800 -o "release/OpenFiles-3.2026.1001-mac.zip" "https://cdn.pansysoft.app/releases/OpenFiles-3.2026.1001-mac.zip?notarized=0fa4717c92d88b1f462be3e38b4d8195f9adae29ece890d3b4dc6f3e6f23b315"
+          test "$(stat -c%s "release/OpenFiles-3.2026.1001-mac.zip")" = "293209061"
+          echo "0fa4717c92d88b1f462be3e38b4d8195f9adae29ece890d3b4dc6f3e6f23b315  release/OpenFiles-3.2026.1001-mac.zip" | sha256sum --check
+          curl -fL --retry 4 --connect-timeout 30 --max-time 1800 -o "release/OpenFiles-3.2026.1001-mac.zip.blockmap" "https://cdn.pansysoft.app/releases/OpenFiles-3.2026.1001-mac.zip.blockmap?notarized=78f4b27da116e029145a2aa2fe3d5a7d375a270ebf9d6432cf38c05437664af2"
+          test "$(stat -c%s "release/OpenFiles-3.2026.1001-mac.zip.blockmap")" = "305614"
+          echo "78f4b27da116e029145a2aa2fe3d5a7d375a270ebf9d6432cf38c05437664af2  release/OpenFiles-3.2026.1001-mac.zip.blockmap" | sha256sum --check
+          curl -fL --retry 4 --connect-timeout 30 --max-time 1800 -o "release/OpenFiles-3.2026.1001-arm64-mac.zip" "https://cdn.pansysoft.app/releases/OpenFiles-3.2026.1001-arm64-mac.zip?notarized=a2353d0e0a9ae9adac06618df4523bcc3161537c3601eb1f0c15f09cce5206c2"
+          test "$(stat -c%s "release/OpenFiles-3.2026.1001-arm64-mac.zip")" = "255695588"
+          echo "a2353d0e0a9ae9adac06618df4523bcc3161537c3601eb1f0c15f09cce5206c2  release/OpenFiles-3.2026.1001-arm64-mac.zip" | sha256sum --check
+          curl -fL --retry 4 --connect-timeout 30 --max-time 1800 -o "release/OpenFiles-3.2026.1001-arm64-mac.zip.blockmap" "https://cdn.pansysoft.app/releases/OpenFiles-3.2026.1001-arm64-mac.zip.blockmap?notarized=8dcb806c4adfae64bc3f2d17fd0666eea3cb383e5269a50259e54b72b4a6e14e"
+          test "$(stat -c%s "release/OpenFiles-3.2026.1001-arm64-mac.zip.blockmap")" = "266482"
+          echo "8dcb806c4adfae64bc3f2d17fd0666eea3cb383e5269a50259e54b72b4a6e14e  release/OpenFiles-3.2026.1001-arm64-mac.zip.blockmap" | sha256sum --check
+          curl -fL --retry 4 --connect-timeout 30 --max-time 1800 -o "release/OpenFiles-3.2026.1001.dmg" "https://cdn.pansysoft.app/releases/OpenFiles-3.2026.1001.dmg?notarized=d9e56546e8df895d33540db1dd23c251ca12584992a0cf6fe738a247f126041f"
+          test "$(stat -c%s "release/OpenFiles-3.2026.1001.dmg")" = "282165864"
+          echo "d9e56546e8df895d33540db1dd23c251ca12584992a0cf6fe738a247f126041f  release/OpenFiles-3.2026.1001.dmg" | sha256sum --check
+          curl -fL --retry 4 --connect-timeout 30 --max-time 1800 -o "release/OpenFiles-3.2026.1001.dmg.blockmap" "https://cdn.pansysoft.app/releases/OpenFiles-3.2026.1001.dmg.blockmap?notarized=0cf1d1cc50b7113cf558dc25156d916dae637968b58e8a337eb911d92cae178d"
+          test "$(stat -c%s "release/OpenFiles-3.2026.1001.dmg.blockmap")" = "295090"
+          echo "0cf1d1cc50b7113cf558dc25156d916dae637968b58e8a337eb911d92cae178d  release/OpenFiles-3.2026.1001.dmg.blockmap" | sha256sum --check
+          curl -fL --retry 4 --connect-timeout 30 --max-time 1800 -o "release/OpenFiles-3.2026.1001-arm64.dmg" "https://cdn.pansysoft.app/releases/OpenFiles-3.2026.1001-arm64.dmg?notarized=495d1e9a360b40ab370398b35ca9184f9bfb182e2f0f48dfe043382af84a35c8"
+          test "$(stat -c%s "release/OpenFiles-3.2026.1001-arm64.dmg")" = "246724311"
+          echo "495d1e9a360b40ab370398b35ca9184f9bfb182e2f0f48dfe043382af84a35c8  release/OpenFiles-3.2026.1001-arm64.dmg" | sha256sum --check
+          curl -fL --retry 4 --connect-timeout 30 --max-time 1800 -o "release/OpenFiles-3.2026.1001-arm64.dmg.blockmap" "https://cdn.pansysoft.app/releases/OpenFiles-3.2026.1001-arm64.dmg.blockmap?notarized=32aec564091f39d95d55e9ba7d992211b3a8b014bb511e6dd7718effd8cb698f"
+          test "$(stat -c%s "release/OpenFiles-3.2026.1001-arm64.dmg.blockmap")" = "258015"
+          echo "32aec564091f39d95d55e9ba7d992211b3a8b014bb511e6dd7718effd8cb698f  release/OpenFiles-3.2026.1001-arm64.dmg.blockmap" | sha256sum --check
+          gh release upload 3.2026.1001 release/* --repo pansysoft/openfiles.desktop
